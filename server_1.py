@@ -6,7 +6,6 @@ from thread import *
 import threading
 
 # declare our global variables for the game
-stage=0
 Mygrid = [ [ None, None, None, None, None, None, None, None, None,None ], \
          [ None, None, None, None, None, None, None, None, None,None ], \
          [ None, None, None, None, None, None, None, None, None,None ], \
@@ -95,11 +94,7 @@ def display_boards(b):
     x1=600
     y=150
     y1=150
-    font = pygame.font.Font(None, 20)
-    rmsg='A'
-    cmsg=1
-    rx=195
-    cy=165
+
 
     for i in range(11):
         pygame.draw.line (background, (0,0,250), (x, 150), (x, 450), 2)
@@ -111,10 +106,42 @@ def display_boards(b):
         x1=x1+30
         y=y+30
         y1=y1+30
+
+    font = pygame.font.Font(None, 20)
+    rmsg='A'
+    cmsg=1
+    rx=215
+    cy=165
+    rx1=615
+
+    for i in range(10):
         text = font.render(str(cmsg), 1, (10, 10, 10))
-        board.blit(text, (195,cy))
+        background.blit(text, (180,cy))
+        background.blit(text, (580,cy))
+        text1 = font.render(str(rmsg), 1, (10, 10, 10))
+        background.blit(text1, (rx,130))
+        background.blit(text1, (rx1,130))
         cmsg=cmsg+1
         cy=cy+30
+        rx=rx+30
+        rx1=rx1+30
+        rmsg=chr(ord(rmsg)+1)
+
+    x=50
+    for i in range(2):
+        pygame.draw.rect(background,(128,128,128),(x,150,50,10))
+        pygame.draw.rect(background,(128,128,128),(x,170,40,10))
+        pygame.draw.rect(background,(128,128,128),(x,190,30,10))
+        pygame.draw.rect(background,(128,128,128),(x,210,30,10))
+        pygame.draw.rect(background,(128,128,128),(x,230,20,10))
+        x=1000
+
+    font = pygame.font.Font(None, 24)
+    text = font.render('Your Grid', 1, (10, 10, 10))
+    background.blit(text, (300,110))
+    text = font.render('Opponent\'s Grid', 1, (10, 10, 10))
+    background.blit(text, (680,110))
+
 
     return background
 
@@ -123,7 +150,6 @@ def position_ships(board):
     pygame.draw.rect(board,(0,0,0),(550,500,100,30),2)
     font = pygame.font.Font(None, 24)
     text = font.render('READY', 1, (10, 10, 10))
-    #board.fill ((250, 250, 250), (0, 300, 300, 25))
     board.blit(text, (570,510))
 
     #Ready Button Clicked
@@ -145,6 +171,28 @@ def position_ships(board):
          # update the display
         showBoard (ttt, board)
 
+def threaded(c):
+    while True:
+ 
+        # data received from client
+        data = c.recv(1024)
+        print data
+        if not data:
+            print('Bye')
+             
+            # lock released on exit
+            print_lock.release()
+            break
+ 
+        # reverse the given string from client
+        data = raw_input('Enter msg:')
+ 
+        # send back reversed string to client
+        c.send(data)
+ 
+    # connection closed
+    c.close()
+
 
 # initialize pygame and our window
 pygame.init()
@@ -156,20 +204,35 @@ board = initBoard (ttt)
 position_ships(board)
 board=display_boards(ttt)
 
+#c, addr = s.accept()     
+#print 'Got connection from', addr
+
+   # send a thank you message to the client. 
+#c.send('Thank you for connecting')
+
 # main event loop
 #running = 1
 crashed=False
 
 #while (running == 1):
 while not crashed:
+    c, addr = s.accept()     
+    print 'Got connection from', addr
+
+   # send a thank you message to the client. 
+    c.send('Thank you for connecting')
     for event in pygame.event.get():
         #if event.type is QUIT:
         if event.type==pygame.QUIT:
             crashed=True
-            #running = 0
 
+            #running = 0
+        print_lock.acquire()
+        start_new_thread(threaded,(c,))
          # update the display
         showBoard (ttt, board)
+        print_lock.release()
       
+c.close()
 pygame.quit()
 quit()
