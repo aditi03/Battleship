@@ -8,7 +8,7 @@ import time
 import math
 
 # declare our global variables for the game
-Mygrid = [ [ None, None, None, None, None, None, None, None, None,None ], \
+myGrid = [ [ None, None, None, None, None, None, None, None, None,None ], \
          [ None, None, None, None, None, None, None, None, None,None ], \
          [ None, None, None, None, None, None, None, None, None,None ], \
          [ None, None, None, None, None, None, None, None, None,None ], \
@@ -50,7 +50,10 @@ s.listen(5)
 print "socket is listening"
 print_lock = threading.Lock() 
 
-drag=0        
+drag=0
+img_pos=[]
+marked=[]
+ornt=list()
 #declare our support functions
 
 def initBoard(b):
@@ -135,12 +138,13 @@ def showBoard (ttt, board):
     pygame.display.flip()
 
 def display_boards(b):
+ 
     background=pygame.Surface(b.get_size())
     background=background.convert()
     background.fill((250,250,250))
 
     #vertical lines
-    #pygame.draw.line (background, (0,0,250), (200, 150), (200, 450), 2)
+    pygame.draw.line (background, (0,0,250), (200, 150), (200, 450), 2)
     x=200
     x1=600
     y=150
@@ -177,7 +181,20 @@ def display_boards(b):
         rx=rx+30
         rx1=rx1+30
         rmsg=chr(ord(rmsg)+1)
-
+    a=0
+    ships=['Carrier','Battleship','Cruiser','Submarine','Destroyer']
+    for s in ships:
+        if ornt[a]=='v':
+            image = pygame.image.load("C:\\Python27\\HandsOn\\BattleShip\\"+s+"_R.png").convert()
+            background.blit(image, (img_pos[a][0],img_pos[a][1]))
+        else:
+            image = pygame.image.load("C:\\Python27\\HandsOn\\BattleShip\\"+s+".png").convert()
+            background.blit(image, (img_pos[a][0],img_pos[a][1]))
+            
+        a=a+1
+        showBoard(ttt,background)
+        
+    
     x=50
     for i in range(2):
         pygame.draw.rect(background,(128,128,128),(x,150,50,10))
@@ -196,62 +213,33 @@ def display_boards(b):
 
     return background
 
-def position_ships1(board):
-    #Create Ready Button
-    pygame.draw.rect(board,(0,0,0),(550,500,100,30),2)
-    font = pygame.font.Font(None, 24)
-    text = font.render('READY', 1, (10, 10, 10))
-    board.blit(text, (570,510))
-    crashed1=False
-    #movableImg(700,180,image_surf.get_rect().size[0],image_surf.get_rect().size[1])
-    #Ready Button Clicked
-    while not crashed1 :
-        for event in pygame.event.get():
-        #if event.type is QUIT:
-            if event.type==pygame.QUIT:
-                crashed=True
-            #running = 0
-            if event.type==pygame.MOUSEBUTTONDOWN:
-                (mouseX, mouseY) = pygame.mouse.get_pos()
-                click = pygame.mouse.get_pressed()
-                img= pygame.image.load("C:\\Python27\\HandsOn\\BattleShip\\Carrier.png")
-                board.blit(img, (700, 180))
-                movableImg(img,board)
-                pygame.display.update()
-    
-            pygame.display.update()
-         # update the display
-        showBoard (ttt, board)
-
-
-    
-    crashed=False
-
-    
-#while (running == 1):
-    while not crashed:
-        for event in pygame.event.get():
-        #if event.type is QUIT:
-            if event.type==pygame.QUIT:
-                crashed=True
-            #running = 0
-            if event.type==pygame.MOUSEBUTTONDOWN:
-                (mouseX, mouseY) = pygame.mouse.get_pos()
-                click = pygame.mouse.get_pressed()
-                img= pygame.image.load("C:\\Python27\\HandsOn\\BattleShip\\Carrier.png")
-                movableImg(img,board)
-                pygame.display.update()
-                print str(mouseX)+' '+str(mouseY)
-                if 550<=mouseX<=650 and 500<=mouseY<=600:
-                    return
-        pygame.display.update()
-         # update the display
-        #showBoard (ttt, board)'''
 
 def position(board):
     ships=['Carrier','Battleship','Cruiser','Submarine','Destroyer']
     pos=[[700,180],[730,240],[760,300],[760,360],[790,420]]
     a=0
+
+    
+    font = pygame.font.Font(None, 20)
+    rmsg='A'
+    cmsg=1
+    rx=215
+    cy=165
+    rx1=615
+
+    for i in range(10):
+        text = font.render(str(cmsg), 1, (10, 10, 10))
+        board.blit(text, (180,cy))
+       
+        text1 = font.render(str(rmsg), 1, (10, 10, 10))
+        board.blit(text1, (rx,130))
+        
+        cmsg=cmsg+1
+        cy=cy+30
+        rx=rx+30
+        rx1=rx1+30
+        rmsg=chr(ord(rmsg)+1)
+    
     #image load
     if count==0:
         for s in ships:
@@ -271,7 +259,7 @@ def position(board):
     crashed1=False
     if count==5:
         crashed1=True
-    print crashed1
+    #print crashed1
     
     while not crashed1 and count<5:
         #print crashed1
@@ -280,21 +268,24 @@ def position(board):
         #if event.type is QUIT:
             if event.type==pygame.QUIT:
                 crashed1=True
+                pygame.quit()
+                quit()
+                
             #running = 0
             if event.type==pygame.MOUSEBUTTONDOWN:
                 px, py = pygame.mouse.get_pos()
                 img=pygame.image.load("C:\\Python27\\HandsOn\\BattleShip\\"+ships[count]+".png").convert()
                 imgWidth=img.get_rect().size[0]
                 imgHeight=img.get_rect().size[1]
-                
-                print x,y
+                size=imgWidth/30
+                print 'o:',x,y,imgWidth,imgHeight
                 if x<=px<=imgWidth+x and y<=py<=imgHeight+y:
                      rotate_img(ships[count],board,x,y)  
                 elif 200<=px<=500 and 150<=py<=450:  
-                    position_ships(board,img)
+                    position_ships(board,img,size,'h')
                     position(board)
-                    
-        showBoard (ttt, board)    
+        showBoard (ttt, board)
+    
         
     
 
@@ -302,7 +293,9 @@ def rotate_img(img,board,x,y):
     global count
     print 'rotate',x,y,count
     image = pygame.image.load("C:\\Python27\\HandsOn\\BattleShip\\"+img+".png").convert()
-    #print image
+    imgWidth=image.get_rect().size[0]
+    size=imgWidth/30
+    print image
     angle=90
     rect=image.get_rect()
     #print 'rect',rect
@@ -312,15 +305,15 @@ def rotate_img(img,board,x,y):
     r=pygame.transform.rotate(image,angle)
     #print r,'r'
     board.blit(r,(x,y))
-    position_ships(board,r)
+    position_ships(board,r,size,'v')
     print 'back',count
     position(board)
 
-def position_ships(board,img):
+def position_ships(board,img,size,orn):
      #Create Ready Button
     global count
     
-
+    ornt.append(orn)
     edgeTop=150
     edgeBottom=450
     interval=30
@@ -338,36 +331,119 @@ def position_ships(board,img):
     
     crashed1=False
     counter=0
+    flag=1
     while not crashed1 and count<5:
         for event in pygame.event.get():
         #if event.type is QUIT:
             if event.type==pygame.QUIT:
                 crashed1=True
+                pygame.quit()
+                quit()
             #running = 0
             if event.type==pygame.MOUSEBUTTONDOWN:
+                
                 px, py = pygame.mouse.get_pos()
                 print 'c:',px,py
                 for cx, cy in corners:
+                    #print px,py
+                    #print 'hereeeeee'
                     if math.hypot(cx-px, cy-py) < math.sqrt(1800):
-                        #img = pygame.image.load("C:\\Python27\\HandsOn\\BattleShip\\"+img+".png").convert()
-                        board.blit(img, (cx,cy))
-                        print 'p:',cx,cy
-                        gx=(cx-200)//30
-                        gy=(cy-150)//30
-                        rect=img.get_rect()
-                        print 'bottom',rect.bottomright
-                        print gx,gy
-                        count=count+1
-                        counter=counter+1
-                        if counter==1:
-                            crashed1=True
-                            return
-                        print counter
-                        break
+                        print 'corner:',cx,cy
+                           
+                        gy=(cx-200)//30
+                        gx=(cy-150)//30
+
+                        if myGrid[gx][gy]==None:
+                            
+                            print 'cord',gx,gy
+                            if orn=='h':
+                                i=0
+                                for i in range(size):
+                                    try:
+                                        if myGrid[gx][gy+i]==2:
+                                            print 'hello'
+                                            flag=0
+                                            print 'flag h',flag
+                                            break
+                                        else:
+                                            continue
+                                    except IndexError:
+                                        flag=0
+                                    
+                                if flag==1:
+                                    board.blit(img, (cx,cy))
+                                    img_pos.append((cx,cy))
+                                    for i in range(size):
+                                        if myGrid[gx][gy+i]==None:
+                                            myGrid[gx][gy+i]=2
+                                            marked.append((gx,gy))
+                                        else:
+                                            flag=0
+                                            print 'flag',flag
+                                            break
+                                    count=count+1
+                                    counter=counter+1
+                                    if counter==1:
+                                        crashed1=True
+                                        return
+                                    print counter
+                                    break
+                                else:
+                                    flag=1
+                                
+
+                            elif orn=='v':
+                                i=0
+                              
+                                for i in range(size):
+                                    try:
+                                        if myGrid[gx+i][gy]==2:
+                                            flag=0
+                                            break
+                                        else:
+                                            continue
+                                    except IndexError:
+                                        flag=0
+                                        
+                                if flag==1:
+                                    board.blit(img, (cx,cy))
+                                    img_pos.append((cx,cy))
+                                    for i in range(size):
+                                        if myGrid[gx+i][gy]==None:
+                                            myGrid[gx+i][gy]=2
+                                            marked.append((gx,gy))
+                                        else:
+                                            flag=0
+                                            print 'flag',flag
+                                            break
+                                    count=count+1
+                                    counter=counter+1
+                                    if counter==1:
+                                        crashed1=True
+                                        return
+                                    print counter
+                                    break        
+                                else:
+                                    flag=1
+                                      
+
+                            
                        
+                            
+                        else:
+                            print 'here'
+                            if event.type==pygame.MOUSEBUTTONDOWN:
+                                px, py = pygame.mouse.get_pos()
+                                print 'c:',px,py
+                            #continue
+                                   
+                            
+                       
+                   
             showBoard (ttt, board)
 
-def ready_btn(board):                    
+def ready_btn(board):
+    print myGrid  
     pygame.draw.rect(board,(0,0,0),(550,500,100,30),2)
     font = pygame.font.Font(None, 24)
     text = font.render('READY', 1, (10, 10, 10))
@@ -379,6 +455,8 @@ def ready_btn(board):
         #if event.type is QUIT:
             if event.type==pygame.QUIT:
                 crashed=True
+                pygame.quit()
+                quit()
             #running = 0
             if event.type==pygame.MOUSEBUTTONDOWN:
                 (mouseX, mouseY) = pygame.mouse.get_pos()
@@ -400,7 +478,7 @@ def threaded(c):
             print('Bye')
              
             # lock released on exit
-            print_lock.release()
+            #print_lock.release()
             break
  
         # reverse the given string from client
@@ -420,11 +498,13 @@ pygame.display.set_caption ('BattleShip')
 
 # create the game board
 board = initBoard (ttt)
+
 position(board)
 print 'In Main'
 ready_btn(board)
-board=display_boards(ttt)
-showBoard(ttt,board)
+print 'In Main again'
+board1=display_boards(ttt)
+
 # main event loop
 #running = 1
 crashed=False
@@ -433,7 +513,7 @@ crashed=False
 while not crashed:
     c, addr = s.accept()     
     print 'Got connection from', addr
-
+    showBoard (ttt, board1)
    # send a thank you message to the client. 
     c.send('Thank you for connecting')
     for event in pygame.event.get():
@@ -442,11 +522,11 @@ while not crashed:
             crashed=True
 
             #running = 0
-        print_lock.acquire()
+        #print_lock.acquire()
         start_new_thread(threaded,(c,))
          # update the display
-        showBoard (ttt, board)
-        print_lock.release()
+        showBoard (ttt, board1)
+        #print_lock.release()
       
 c.close()
 pygame.quit()
