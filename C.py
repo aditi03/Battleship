@@ -42,13 +42,13 @@ port=12345
 # instead we have inputted an empty string
 # this makes the server listen to requests 
 # coming from other computers on the network
-#s.bind(('', port))        
-#print "socket binded to %s" %(port)
+s.bind(('', port))        
+print "socket binded to %s" %(port)
 
 # put the socket into listening mode
-#s.listen(5)     
-#print "socket is listening"
-#print_lock = threading.Lock() 
+s.listen(5)     
+print "socket is listening"
+print_lock = threading.Lock() 
 
 drag=0
 img_pos=[]
@@ -466,32 +466,8 @@ def ready_btn(board):
         pygame.display.update()
          # update the display
         showBoard (ttt, board)
-    
-
-def threaded(c):
-    while True:
- 
-        # data received from client
-        data = c.recv(1024)
-        print data
-        if not data:
-            print('Bye')
-             
-            # lock released on exit
-            #print_lock.release()
-            break
- 
-        # reverse the given string from client
-        data = raw_input('Enter msg:')
- 
-        # send back reversed string to client
-        c.send(data)
- 
-    # connection closed
-    c.close()
 
 def clickBoard(board1):
-	print('in click')
 	(mouseX, mouseY) = pygame.mouse.get_pos()
 	if(not(600<=mouseX<=900 and 150<=mouseY<=450)):
 		return
@@ -511,61 +487,72 @@ def clickBoard(board1):
 		if math.hypot(cx-mouseX, cy-mouseY) < math.sqrt(1800):
 			print 'corner:',cx,cy
 			return cx,cy
-	
 
-	
-def enemy(d,x,y,board1,ttt):
-	print 'in enemy'
-	px=(x-600)//30
-	py=(y-150)//30
-	string=d.split(' ')
-	if string[2]=='miss':
-		Enemygrid[px][py]=0
-		pygame.draw.circle(board1,(0,0,0),((x+15),(y+15)),15)
-	elif string[2]=='hit':
-		Enemygrid[px][py]=1
-		pygame.draw.line (board1, (0,0,0), (x,y),(x + 30,y+30), 2)
-        pygame.draw.line (board, (0,0,0), (x+30,y),(x,y+30), 2)
-	print string[2]
-	showBoard(ttt,board1)
-	
+
+    
 def drawMove(board,x,y,res,ttt):
-	print 'in drawmove'
-	cx=(x*30)+200
-	cy=(y*30)+150
-	if res=='miss':
-		pygame.draw.circle(board,(0,0,0),((cx+15),(cy+15)),15)
-	elif res=='hit':
-		pygame.draw.line (board, (0,0,0), (cx,cy),(cx + 30,cy+30), 2)
-		pygame.draw.line (board, (0,0,0), (cx+30,cy),(cx,cy+30), 2)
-	showBoard(ttt,board)
+    cx=(x*30)+200
+    cy=(y*30)+150
+    if res=='miss':
+        pygame.draw.circle(board,(0,0,0),((cx+15),(cy+15)),15)
+    elif res=='hit':
+        pygame.draw.line (board, (0,0,0), (cx,cy),(cx + 30,cy+30), 2)
+        pygame.draw.line (board, (0,0,0), (cx+30,cy),(cx,cy+30), 2)
+    showBoard(ttt,board)
 
-def move(d,board,ttt):
-	print 'in move'
-	s=d.split(' ')
-	while True:
-		board_pos_x=int(s[0])
-		board_pos_y=int(s[1])
-		grid_pos_x=(board_pos_x-600)//30
-		grid_pos_y=(board_pos_y-150)//30
-		print str(myGrid[grid_pos_x][grid_pos_y])
-		if(myGrid[grid_pos_x][grid_pos_y]==2):
-			myGrid[grid_pos_x][grid_pos_y]=1
-			result='hit'
-			#drawMove(board1,grid_pos_x,grid_pos_y,result)
-		elif(myGrid[grid_pos_x][grid_pos_y]==None):
-			myGrid[grid_pos_x][grid_pos_y]=0
-			result='miss'
-		#print str(grid_pos_x)+str(grid_pos_y)+str(myGrid[grid_pos_x][grid_pos_y])+result
-		drawMove(board1,grid_pos_x,grid_pos_y,result,ttt)
-		return
-	
-	
-	
+def threaded(c,board1,ttt):
+    print 'in threaded'
+    while True:
+        # data received from client
+        data = c.recv(1024)
+        print data
+        s=data.split(' ')
+        board_pos_x=int(s[0])
+        board_pos_y=int(s[1])
+        grid_pos_x=(board_pos_x-600)//30
+        grid_pos_y=(board_pos_y-150)//30
+        print str(myGrid[grid_pos_x][grid_pos_y])
+        if(myGrid[grid_pos_x][grid_pos_y]==2):
+            myGrid[grid_pos_x][grid_pos_y]=1
+            result='hit'
+            #drawMove(board1,grid_pos_x,grid_pos_y,result)
+        elif(myGrid[grid_pos_x][grid_pos_y]==None):
+            myGrid[grid_pos_x][grid_pos_y]=0
+            result='miss'
+        print str(grid_pos_x)+str(grid_pos_y)+str(myGrid[grid_pos_x][grid_pos_y])+result
+        drawMove(board1,grid_pos_x,grid_pos_y,result,ttt)
+        if not data:
+            print('Bye')
+             
+            # lock released on exit
+            #print_lock.release()
+            break
+
+        # reverse the given string from client
+        #data = raw_input('Enter msg:')
+        print('Enter attck pos')
+        crashed=False
+        while not crashed:
+            while True:
+                for event in pygame.event.get():
+                    if event.type==pygame.QUIT:
+                        crashed=True
+                    if event.type is MOUSEBUTTONDOWN:
+                        x,y=clickBoard(board1)
+                        if(x and y):
+                            print 'back from move'
+                            c.send(str(x)+' '+str(y)+' '+result)
+        # send back reversed string to client
+        #c.send(data)'''
+ 
+    # connection closed
+    c.close()
+
+
 # initialize pygame and our window
 pygame.init()
 ttt = pygame.display.set_mode ((1100, 600))
-pygame.display.set_caption ('BattleShip Client')
+pygame.display.set_caption ('BattleShip')
 
 # create the game board
 board = initBoard (ttt)
@@ -579,55 +566,28 @@ board1=display_boards(ttt)
 # main event loop
 #running = 1
 crashed=False
-flag=False
+
 #while (running == 1):
 while not crashed:
-	s.connect(('192.168.43.231', port))
-	print s.recv(1024)
-	showBoard (ttt, board1)
-	while True:
-		#msg=raw_input('Enter data :')
-		#s.send(msg.encode('ascii'))
-		#d=s.recv(1024)
-		#print str('Received from the server :'+str(d.decode('ascii')))
-		#ans = raw_input('\nDo you want to continue(y/n) :')
-		#if ans == 'y':
-		#	continue
-		#else:
-		#	break
-		# close the connection
-		#print 'True'
-		for event in pygame.event.get():
-			#print 'in for'
-			#if event.type is QUIT:
-			if event.type==pygame.QUIT:
-				crashed=True
-			elif event.type is MOUSEBUTTONDOWN:
-				# the user clicked; place an X or O
-				x,y=clickBoard(board1)
-				if(x and y):
-					print 'back from move'
-					s.send(str(x)+' '+str(y))
-					flag=True
-					break
-			showBoard (ttt, board1)
-		if flag==True:
-			break
-	
-	print 'out while'
-	d=s.recv(1024)
-	
-	#print str('Received from the server :'+str(d.decode('ascii')))
-	enemy(d,x,y,board1,ttt)
-	move(d,board1,ttt)
-	print 'in main 3'
-				#running = 0
-			#print_lock.acquire()
-			#start_new_thread(threaded,(c,))
-			 # update the display
-			
-			#print_lock.release()
-	s.close()
-#c.close()
+    c, addr = s.accept()     
+    print 'Got connection from', addr
+    showBoard (ttt, board1)
+   # send a thank you message to the client. 
+    c.send('Thank you for connecting')
+    for event in pygame.event.get():
+        #if event.type is QUIT:
+        if event.type==pygame.QUIT:
+            crashed=True
+
+            #running = 0
+        #print_lock.acquire()
+        #start_new_thread(threaded,(c,board1,ttt))
+            
+         # update the display
+        threaded(c,board1,ttt)
+        showBoard (ttt, board1)
+        #print_lock.release()
+      
+c.close()
 pygame.quit()
 quit()
