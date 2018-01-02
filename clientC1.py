@@ -54,6 +54,7 @@ drag=0
 img_pos=[]
 marked=[]
 ornt=list()
+res='first'
 #declare our support functions
 
 def initBoard(b):
@@ -524,8 +525,9 @@ def enemy(d,x,y,board1,ttt):
 		pygame.draw.circle(board1,(0,0,0),((x+15),(y+15)),15)
 	elif string[2]=='hit':
 		Enemygrid[px][py]=1
-		pygame.draw.line (board1, (0,0,0), (x,y),(x + 30,y+30), 2)
-        pygame.draw.line (board, (0,0,0), (x+30,y),(x,y+30), 2)
+		pygame.draw.line (board1, (0,0,0), (x,y),(x+30,y+30), 2)
+        pygame.draw.line (board1, (0,0,0), (x+30,y),(x,y+30), 2)
+	
 	print string[2]
 	showBoard(ttt,board1)
 	
@@ -536,12 +538,15 @@ def drawMove(board,x,y,res,ttt):
 	if res=='miss':
 		pygame.draw.circle(board,(0,0,0),((cx+15),(cy+15)),15)
 	elif res=='hit':
-		pygame.draw.line (board, (0,0,0), (cx,cy),(cx + 30,cy+30), 2)
+		pygame.draw.line (board, (0,0,0), (cx,cy),(cx+30,cy+30), 2)
 		pygame.draw.line (board, (0,0,0), (cx+30,cy),(cx,cy+30), 2)
 	showBoard(ttt,board)
+	return res
 
 def move(d,board,ttt):
+	flag=1
 	print 'in move'
+	result='dummy'
 	s=d.split(' ')
 	while True:
 		board_pos_x=int(s[0])
@@ -552,16 +557,19 @@ def move(d,board,ttt):
 		if(myGrid[grid_pos_x][grid_pos_y]==2):
 			myGrid[grid_pos_x][grid_pos_y]=1
 			result='hit'
+			flag=0
 			#drawMove(board1,grid_pos_x,grid_pos_y,result)
 		elif(myGrid[grid_pos_x][grid_pos_y]==None):
 			myGrid[grid_pos_x][grid_pos_y]=0
 			result='miss'
+			flag=0
 		#print str(grid_pos_x)+str(grid_pos_y)+str(myGrid[grid_pos_x][grid_pos_y])+result
-		drawMove(board1,grid_pos_x,grid_pos_y,result,ttt)
-		return
+		if flag==0:
+			res=drawMove(board1,grid_pos_x,grid_pos_y,result,ttt)
+			return res
 	
 	
-	
+
 # initialize pygame and our window
 pygame.init()
 ttt = pygame.display.set_mode ((1100, 600))
@@ -580,6 +588,7 @@ board1=display_boards(ttt)
 #running = 1
 crashed=False
 flag=False
+f=0
 #while (running == 1):
 while not crashed:
 	s.connect(('192.168.43.231', port))
@@ -597,37 +606,40 @@ while not crashed:
 		#	break
 		# close the connection
 		#print 'True'
-		for event in pygame.event.get():
-			#print 'in for'
-			#if event.type is QUIT:
-			if event.type==pygame.QUIT:
-				crashed=True
-			elif event.type is MOUSEBUTTONDOWN:
-				# the user clicked; place an X or O
-				x,y=clickBoard(board1)
-				if(x and y):
-					print 'back from move'
-					s.send(str(x)+' '+str(y))
-					flag=True
-					break
-			showBoard (ttt, board1)
-		if flag==True:
-			break
-	
-	print 'out while'
-	d=s.recv(1024)
-	
-	#print str('Received from the server :'+str(d.decode('ascii')))
-	enemy(d,x,y,board1,ttt)
-	move(d,board1,ttt)
-	print 'in main 3'
-				#running = 0
+		if f==0:
+			for event in pygame.event.get():
+				#print 'in for'
+				#if event.type is QUIT:
+				if event.type==pygame.QUIT:
+					crashed=True
+				elif event.type is MOUSEBUTTONDOWN:
+					# the user clicked; place an X or O
+					x,y=clickBoard(board1)
+					if(x and y):
+						print 'back from move'
+						s.send(str(x)+' '+str(y)+' '+res)
+						f=1
+						#flag=True
+						#break
+				showBoard (ttt, board1)
+			#if flag==True:
+		#	break
+		elif f==1:
+			print 'out while'
+			d=s.recv(1024)
+		
+		#print str('Received from the server :'+str(d.decode('ascii')))
+			enemy(d,x,y,board1,ttt)
+			res=move(d,board1,ttt)
+			print 'in main 3'
+			f=0
+						#running = 0
 			#print_lock.acquire()
 			#start_new_thread(threaded,(c,))
 			 # update the display
 			
 			#print_lock.release()
-	s.close()
+s.close()
 #c.close()
 pygame.quit()
 quit()

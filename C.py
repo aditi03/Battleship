@@ -54,6 +54,8 @@ drag=0
 img_pos=[]
 marked=[]
 ornt=list()
+prev_x=0
+prev_y=0
 #declare our support functions
 
 def initBoard(b):
@@ -500,27 +502,57 @@ def drawMove(board,x,y,res,ttt):
         pygame.draw.line (board, (0,0,0), (cx+30,cy),(cx,cy+30), 2)
     showBoard(ttt,board)
 
+
+def enemy(d,x,y,board1,ttt):
+    print 'in enemy'
+    px=(x-600)//30
+    py=(y-150)//30
+    #string=d.split(' ')
+    if d=='miss':
+        Enemygrid[px][py]=0
+        pygame.draw.circle(board1,(0,0,0),((x+15),(y+15)),15)
+    elif d=='hit':
+        Enemygrid[px][py]=1
+        pygame.draw.line (board1, (0,0,0), (x,y),(x + 30,y+30), 2)
+        pygame.draw.line (board1, (0,0,0), (x+30,y),(x,y+30), 2)
+
+    print d
+    showBoard(ttt,board1)
+
+
+
 def threaded(c,board1,ttt):
+    flag=1
+    global prev_x,prev_y
     print 'in threaded'
     while True:
         # data received from client
         data = c.recv(1024)
         print data
         s=data.split(' ')
+
+        if(s[2]!='first'):
+            enemy(s[2],prev_x,prev_y,board1,ttt)
+        
         board_pos_x=int(s[0])
+        prev_x=board_pos_x
         board_pos_y=int(s[1])
+        prev_y=board_pos_y
         grid_pos_x=(board_pos_x-600)//30
         grid_pos_y=(board_pos_y-150)//30
         print str(myGrid[grid_pos_x][grid_pos_y])
         if(myGrid[grid_pos_x][grid_pos_y]==2):
             myGrid[grid_pos_x][grid_pos_y]=1
             result='hit'
+            flag=0
             #drawMove(board1,grid_pos_x,grid_pos_y,result)
         elif(myGrid[grid_pos_x][grid_pos_y]==None):
             myGrid[grid_pos_x][grid_pos_y]=0
             result='miss'
+            flag=0
         print str(grid_pos_x)+str(grid_pos_y)+str(myGrid[grid_pos_x][grid_pos_y])+result
-        drawMove(board1,grid_pos_x,grid_pos_y,result,ttt)
+        if flag==0:
+            drawMove(board1,grid_pos_x,grid_pos_y,result,ttt)
         if not data:
             print('Bye')
              
@@ -542,11 +574,12 @@ def threaded(c,board1,ttt):
                         if(x and y):
                             print 'back from move'
                             c.send(str(x)+' '+str(y)+' '+result)
+                            return
         # send back reversed string to client
         #c.send(data)'''
  
     # connection closed
-    c.close()
+    #c.close()
 
 
 # initialize pygame and our window
@@ -584,8 +617,10 @@ while not crashed:
         #start_new_thread(threaded,(c,board1,ttt))
             
          # update the display
+        print 'before'
         threaded(c,board1,ttt)
         showBoard (ttt, board1)
+        print 'after'
         #print_lock.release()
       
 c.close()
